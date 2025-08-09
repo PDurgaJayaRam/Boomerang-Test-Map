@@ -16,13 +16,14 @@ public class VirtualJoystick : MonoBehaviour, IDragHandler, IPointerUpHandler, I
     private Vector2 inputVector = Vector2.zero;
     public Vector2 InputVector { get { return inputVector; } }
 
+    private Canvas canvas;
+    private Camera uiCamera;
+
     void Start()
     {
-        // Show controls in editor for testing
-        // Comment this out for final build if you want to hide on non-mobile
-        // #if !UNITY_ANDROID && !UNITY_IOS
-        // gameObject.SetActive(false);
-        // #endif
+        canvas = GetComponentInParent<Canvas>();
+        if (canvas.renderMode == RenderMode.ScreenSpaceCamera)
+            uiCamera = canvas.worldCamera;
         
         // Ensure background is hidden initially
         if (background != null)
@@ -43,11 +44,12 @@ public class VirtualJoystick : MonoBehaviour, IDragHandler, IPointerUpHandler, I
 
     public void OnDrag(PointerEventData eventData)
     {
+        Vector2 position;
         RectTransformUtility.ScreenPointToLocalPointInRectangle(
             background, 
             eventData.position, 
-            eventData.pressEventCamera, 
-            out Vector2 position
+            uiCamera, 
+            out position
         );
 
         Vector2 sizeDelta = background.sizeDelta;
