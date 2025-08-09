@@ -7,7 +7,6 @@ public class JumpButton : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     [Header("Visual Settings")]
     public Color normalColor = new Color(1, 1, 1, 0.7f);
     public Color pressedColor = new Color(1, 0.2f, 0.2f, 0.9f);
-    public Color highlightColor = new Color(1, 1, 1, 0.9f);
     
     [Header("Components")]
     public Image buttonImage;
@@ -18,31 +17,30 @@ public class JumpButton : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 
     void Start()
     {
-        // Show controls in editor for testing
-        // Comment this out for final build if you want to hide on non-mobile
-        // #if !UNITY_ANDROID && !UNITY_IOS
-        // gameObject.SetActive(false);
-        // #endif
-        
         // Set initial visual state
         if (buttonImage != null)
             buttonImage.color = normalColor;
+        
+        Debug.Log("JumpButton Start completed");
     }
 
     public void OnPointerDown(PointerEventData eventData)
     {
+        Debug.Log("JumpButton OnPointerDown - Setting isPressed to true");
         isPressed = true;
         UpdateVisualState(true);
     }
 
     public void OnPointerUp(PointerEventData eventData)
     {
+        Debug.Log("JumpButton OnPointerUp - Setting isPressed to false");
         isPressed = false;
         UpdateVisualState(false);
     }
 
     private void UpdateVisualState(bool pressed)
     {
+        Debug.Log($"JumpButton UpdateVisualState: {pressed}");
         if (buttonImage != null)
         {
             buttonImage.color = pressed ? pressedColor : normalColor;

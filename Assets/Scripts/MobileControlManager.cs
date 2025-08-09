@@ -6,11 +6,15 @@ public class MobileControlManager : MonoBehaviour
     
     void Start()
     {
-        // Show controls on mobile, hide on other platforms
-        #if UNITY_ANDROID || UNITY_IOS
-        mobileControlsCanvas.SetActive(true);
-        #else
-        mobileControlsCanvas.SetActive(false);
-        #endif
+        // Always show controls for testing
+        if (mobileControlsCanvas != null)
+        {
+            mobileControlsCanvas.SetActive(true);
+            Debug.Log("Mobile controls activated");
+        }
+        else
+        {
+            Debug.LogError("MobileControlsCanvas not assigned!");
+        }
     }
 }

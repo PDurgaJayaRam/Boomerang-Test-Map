@@ -12,6 +12,7 @@ public class VirtualJoystick : MonoBehaviour, IDragHandler, IPointerUpHandler, I
     [Header("Settings")]
     public float handleRange = 1f;
     public float deadZone = 0.25f;
+    public bool showBackgroundInitially = true;
 
     private Vector2 inputVector = Vector2.zero;
     public Vector2 InputVector { get { return inputVector; } }
@@ -25,16 +26,25 @@ public class VirtualJoystick : MonoBehaviour, IDragHandler, IPointerUpHandler, I
         if (canvas.renderMode == RenderMode.ScreenSpaceCamera)
             uiCamera = canvas.worldCamera;
         
-        // Ensure background is hidden initially
+        // Show background initially based on setting
         if (background != null)
-            background.gameObject.SetActive(false);
+        {
+            background.gameObject.SetActive(showBackgroundInitially);
+            Debug.Log($"Joystick background set to active: {showBackgroundInitially}");
+        }
     }
 
     public void OnPointerDown(PointerEventData eventData)
     {
-        background.gameObject.SetActive(true);
-        background.position = eventData.position;
-        handle.anchoredPosition = Vector2.zero;
+        Debug.Log("Joystick OnPointerDown");
+        
+        // If background was hidden, show it and position it
+        if (!background.gameObject.activeSelf)
+        {
+            background.gameObject.SetActive(true);
+            background.position = eventData.position;
+            handle.anchoredPosition = Vector2.zero;
+        }
         
         if (visualFeedback != null)
             visualFeedback.SetPressed(true);
@@ -44,6 +54,7 @@ public class VirtualJoystick : MonoBehaviour, IDragHandler, IPointerUpHandler, I
 
     public void OnDrag(PointerEventData eventData)
     {
+        Debug.Log("Joystick OnDrag");
         Vector2 position;
         RectTransformUtility.ScreenPointToLocalPointInRectangle(
             background, 
@@ -65,13 +76,19 @@ public class VirtualJoystick : MonoBehaviour, IDragHandler, IPointerUpHandler, I
             inputVector = Vector2.zero;
 
         handle.anchoredPosition = inputVector * handleRange * (background.sizeDelta / 2);
+        
+        Debug.Log($"Joystick input vector: {inputVector}");
     }
 
     public void OnPointerUp(PointerEventData eventData)
     {
+        Debug.Log("Joystick OnPointerUp");
         inputVector = Vector2.zero;
         handle.anchoredPosition = Vector2.zero;
-        background.gameObject.SetActive(false);
+        
+        // Hide background if it was hidden initially
+        if (!showBackgroundInitially)
+            background.gameObject.SetActive(false);
         
         if (visualFeedback != null)
             visualFeedback.SetPressed(false);

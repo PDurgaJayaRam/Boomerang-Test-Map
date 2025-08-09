@@ -4,7 +4,9 @@ public class PlayerController : MonoBehaviour
 {
     [Header("Movement")]
     public float moveSpeed = 5f;
-    public float rotationSpeed = 10f;
+    public float rotationSpeed = 12f; // Increased for smoother rotation
+    public float accelerationTime = 0.2f; // Time to reach full speed
+    public float decelerationTime = 0.3f; // Time to stop
     
     [Header("Jump")]
     public float jumpHeight = 1.0f; // Height to jump (2.5 - 1.5 = 1.0)
@@ -23,13 +25,30 @@ public class PlayerController : MonoBehaviour
     private bool isGrounded;
     private bool jumpRequested = false;
     
-    void Awake()
+    // For smooth movement
+    private Vector3 currentMovementVelocity;
+    private Vector3 targetMovement;
+    private float currentVelocityX;
+    private float currentVelocityZ;
+    
+    void Start()
     {
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true;
         
         // Calculate the exact jump force needed for the desired height
         jumpForce = Mathf.Sqrt(2 * Mathf.Abs(Physics.gravity.y) * jumpHeight);
+        
+        // Try to find mobile controls if not set
+        if (virtualJoystick == null)
+        {
+            virtualJoystick = FindObjectOfType<VirtualJoystick>();
+        }
+        
+        if (jumpButton == null)
+        {
+            jumpButton = FindObjectOfType<JumpButton>();
+        }
     }
     
     void Update()
@@ -39,12 +58,8 @@ public class PlayerController : MonoBehaviour
         float vertical = 0f;
         bool jump = false;
         
-        // Check if we're on a mobile platform and have mobile controls
-        bool useMobileControls = false;
-        
-        #if UNITY_ANDROID || UNITY_IOS
-        useMobileControls = (virtualJoystick != null && jumpButton != null);
-        #endif
+        // Check if we have mobile controls
+        bool useMobileControls = (virtualJoystick != null && jumpButton != null);
         
         if (useMobileControls)
         {
@@ -65,12 +80,50 @@ public class PlayerController : MonoBehaviour
         // Calculate movement direction in isometric space
         Vector3 moveDirection = new Vector3(horizontal, 0, vertical).normalized;
         
+        // Set target movement
+        targetMovement = moveDirection * moveSpeed;
+        
+        // Smoothly accelerate/decelerate
+        if (moveDirection != Vector3.zero)
+        {
+            // Accelerate
+            currentMovementVelocity.x = Mathf.SmoothDamp(
+                currentMovementVelocity.x, 
+                targetMovement.x, 
+                ref currentVelocityX, 
+                accelerationTime
+            );
+            
+            currentMovementVelocity.z = Mathf.SmoothDamp(
+                currentMovementVelocity.z, 
+                targetMovement.z, 
+                ref currentVelocityZ, 
+                accelerationTime
+            );
+        }
+        else
+        {
+            // Decelerate
+            currentMovementVelocity.x = Mathf.SmoothDamp(
+                currentMovementVelocity.x, 
+                0, 
+                ref currentVelocityX, 
+                decelerationTime
+            );
+            
+            currentMovementVelocity.z = Mathf.SmoothDamp(
+                currentMovementVelocity.z, 
+                0, 
+                ref currentVelocityZ, 
+                decelerationTime
+            );
+        }
+        
         // Apply movement while preserving vertical velocity
-        Vector3 movement = moveDirection * moveSpeed;
-        movement.y = rb.linearVelocity.y; // Preserve gravity/jump velocity
+        Vector3 movement = new Vector3(currentMovementVelocity.x, rb.linearVelocity.y, currentMovementVelocity.z);
         rb.linearVelocity = movement;
         
-        // Rotate player to face movement direction
+        // Handle rotation
         if (moveDirection != Vector3.zero)
         {
             // Calculate target rotation based on movement direction
